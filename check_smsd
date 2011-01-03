@@ -1,0 +1,109 @@
+#!/usr/bin/env python
+#
+# Nagios and Icinga compatible to check whether all smsd instances are still up
+# and running.
+#
+# Return values are:
+#
+#   0 - OK          all smsd instances are running
+#   1 - WARNING     the number of smsd processes does not match the amount of
+#                   modems listed in /dev/
+#   2 - CRITICAL    an smsd instance is not running
+#
+# (c) 2010,2011 Sebastian Muszytowski <sebastian@muszytowski.net>
+
+from optparse import OptionParser
+import os
+import sys
+
+def is_running(pid):
+    try:
+        os.kill(int(pid),0)
+    except OSError as (errno,errstr):
+        if errno == 1:
+            return True
+        if(errno == 3:
+            return False
+    return True
+
+def is_pidfile(filename):
+    pos = filename.upper().find("PID")
+    if pos > 0:
+        return True
+    else:
+        return False
+
+def scandir(directory,verbose):
+    nummodems = get_amount_of_connected_modems()
+    numpidfile = 0
+    numrunning = 0
+    notrunning = []
+    if nummodems < 1:
+        warning("No modems connected")
+    else:
+        for root,dirs,files in os.walk(directory):
+            for pidfile in files:
+                if is_pidfile(pidfile):
+                    numpidfile += 1
+                    if is_running(getcontent(root + "/" + pidfile)):
+                        numrunning += 1
+                    else:
+                        notrunning.append(getcontent(root + "/" + pidfile))
+        # Here begins the result processing
+        if nummodems != numpidfile:
+            if len(notrunning) > 0:
+                critical(" ".join(notrunning) + """ not running anymore. The
+                number of connected modems does not match the number of running
+                sms daemons.""")
+            else:
+                warning("""The number of connected modems does not match the
+                number of running sms daemons.""")
+        else:
+            if len(notrunning) > 0:
+                critical(" ".join(notrunning) + """ not running anymore""")
+            else:
+                ok("Everything is fine")
+
+
+def getcontent(filename):
+    f = open(filename,"r")
+    content = f.read()
+    f.close
+    return content.strip()
+
+def get_amount_of_connected_modems():
+    nummodems = len([x for x in os.listdir('/dev') if x.startswith('ttyUSB')])
+    return (int(nummodems) // 5)
+
+def parse_commandline_options():
+    parser = OptionParser(version="%prog 1.0 by Sebastian Muszytowski "
+    "<sebastian@muszytowski.net>")
+    parser.add_option("-d","--dir",dest="directory",help="This sets the directory"
+    " where the PID files are stored",metavar="/var/run/smsd/")
+    parser.add_option("-v","--verbose",action="store_true",dest="verbose",help="This"
+    "makes the output more verbose")
+    (options,args) = parser.parse_args()
+    return (options,args)
+
+def warning(message):
+    print "WARNING - %s" % (message)
+    sys.exit(1)
+
+def critical(message):
+    print "CRITICAL - %s" % (message)
+    sys.exit(2)
+
+def ok(message):
+    print "OK - %s" % (message)
+    sys.exit(0)
+
+def main():
+    (options,args) = parse_commandline_options()
+    if not options.directory:
+        critical("Insufficient command line arguments.")
+    else:
+        scandir(options.directory,options.verbose)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,80 @@
+#!/usr/bin/env python
+# Nagios and Icinga compatible script to check xfs fragmentatin
+#
+# ATTENTION:    This script can take very long time! Please increase the "service_check_timeout" variable
+#               in you icinga config. You need to run this script as root.
+#
+# Return values are:
+#
+#   0 - OK          The fragmentation is below the warning level
+#   1 - WARNING     The fragmentation is higher than 10% (default)
+#   2 - CRITICAL    The fragmentation is higher than 20% (default)
+#
+# (c) 2010,2011 Sebastian Muszytowski <sebastian@muszytowski.net>
+import os
+import sys
+import subprocess
+from optparse import OptionParser
+
+def device_exists(device):
+    return os.path.exists(device)
+
+def get_fragmentation(device):
+    output = subprocess.Popen(["xfs_db", "-r", "-c", "frag", device], stdout=subprocess.PIPE, stderr=subprocess.STDOUT).communicate()[0]
+    if output.find("not a valid") < 0:
+        return (float(end(output.split(" ")).strip().rstrip("%")),output.strip())
+    else:
+        critical(device + " is not a valid XFS Filesystem")
+
+def main():
+    parser = OptionParser(  version="%prog 1.0 by Sebastian Muszytowski <sebastian@muszytowski.net>",
+                            epilog="This script can take very long time! Increase the 'service_check_timeout' variable in your icinga config.")
+    parser.add_option("-d","--device",dest="device",help="xfs filesystem to be checked",metavar="/dev/sdc2")
+    parser.add_option("-w","--warning",dest="warning",help="drop a warning when the fragmentation is greater than x%, defaults to 10%",metavar="10")
+    parser.add_option("-c","--critical",dest="critical",help="drop a critical error when the fragmentation is greater than x%, defaults to 20%",metavar="20")
+    parser.add_option("-v",action="store_true",dest="verbose",help="verbose output - YAY")
+    (options,args) = parser.parse_args()
+    if not options.device:
+        critical("Device argument missing!")
+    else:
+        if device_exists(options.device):
+            (fragmentation, voutput) =  get_fragmentation(options.device)
+            if not options.warning:
+                options.warning = 10
+            if not options.critical:
+                options.critical = 20
+            if fragmentation < float(options.warning):
+                if options.verbose:
+                    ok(voutput)
+                else:
+                    ok(str(fragmentation) + "% fragmentation")
+            elif fragmentation < float(options.critical):
+                if options.verbose:
+                    warning(voutput)
+                else:
+                    warning(str(fragmentation) + "% fragmentation")
+            else:
+                if options.verbose:
+                    critical(voutput)
+                else:
+                    critical(str(fragmentation) + "% fragmentation")
+        else:
+            critical("Device does not exist")
+
+def warning(message):
+    print "WARNING - %s" % (message)
+    sys.exit(1)
+
+def critical(message):
+    print "CRITICAL - %s" % (message)
+    sys.exit(2)
+
+def ok(message):
+    print "OK - %s" % (message)
+    sys.exit(0)
+
+def end(tmp):
+        return tmp[-1]
+
+if __name__ == "__main__":
+    main()

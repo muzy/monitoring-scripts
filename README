@@ -1,0 +1,12 @@
+Monitoring Scripts by Sebastian Muszytowski
+
+Scripts are compatible to Nagios and Icinga
+
+## Checks
+
+	check_smsd -> this check can monitor smsd instances
+	check_xfs_fragmentation -> check a xfs filesystem for fragmentation
+
+## Misc
+
+	icinga_mail.py -> alternative mail solution for icinga mailings
