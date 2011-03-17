@@ -1,0 +1,24 @@
+#!/bin/sh
+
+if [ -z "$1" ]; then
+	echo 'CRITICAL - Need the pidfile as the first argument!'
+	exit 2
+fi
+
+PIDFILE="$1"
+
+if [ ! -e "${PIDFILE}" ]; then
+	echo 'CRITICAL - File does not exist'
+	exit 2
+fi
+
+PID=$(cat ${PIDFILE})
+NUMPROCS=$(ps h -p ${PID} | wc -l)
+
+if [ "${NUMPROCS}" = "1" ]; then
+	echo "OK - Process is up and running"
+	exit 0
+else
+	echo "CRITICAL - Process not running"
+	exit 2
+fi
