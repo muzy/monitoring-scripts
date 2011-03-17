@@ -4,6 +4,7 @@ Scripts are compatible to Nagios and Icinga
 
 ## Checks
 
+	check_openvpn_running -> monitor whether openvpn (or any other pid) is running
 	check_smsd -> this check can monitor smsd instances
 	check_xfs_fragmentation -> check a xfs filesystem for fragmentation
 

@@ -10,6 +10,8 @@
 #   1 - WARNING     The fragmentation is higher than 10% (default)
 #   2 - CRITICAL    The fragmentation is higher than 20% (default)
 #
+# TODO: Verbose, Width, UNKNOWN instead of CRITICAL
+#
 # (c) 2010,2011 Sebastian Muszytowski <sebastian@muszytowski.net>
 import os
 import sys
