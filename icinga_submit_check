@@ -1,0 +1,6 @@
+#!/bin/sh
+
+date="$(date +%s)"
+
+echo "[${date}] PROCESS_SERVICE_CHECK_RESULT;$1;$2;$3;$4" >> /var/lib/icinga/rw/icinga.cmd
+

@@ -1,0 +1,28 @@
+#!/bin/bash
+
+WARN="${1}"
+CRIT="${2}"
+
+if [ -z "${1}" -o -z "${2}" ]; then
+	exit 3
+fi
+
+CPUTEMP=$(($(cat /sys/class/thermal/thermal_zone0/temp)/1000))
+
+if [ -z "${CPUTEMP}" ]; then
+	exit 3
+fi
+
+if [ "${CPUTEMP}" -ge "${CRIT}" ]; then
+	echo "CRITICAL - ${CPUTEMP}°C"
+	exit 2
+fi
+
+if [ "${CPUTEMP}" -ge "${WARN}" ]; then
+	echo "WARNING - ${CPUTEMP}°C"
+	exit 1
+fi
+
+echo "OK - ${CPUTEMP}°C"
+exit 0
+
